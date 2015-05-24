@@ -1,7 +1,7 @@
 HexChat Text-To-Speech add-on
 =============================
 
-Provides Text-To-Speech functionality to HexChat using ­­­­`festival` or `espeak` (with or without `mbrola`).
+Provides Text-To-Speech functionality to HexChat using ­­­­`festival` or `espeak` (with or without `mbrola`). Based on [XChat TTS Script v0.1](http://xchatttsscript.sourceforge.net/).
 
 #### Requirements
 
