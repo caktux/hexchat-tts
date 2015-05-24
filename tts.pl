@@ -299,7 +299,6 @@ sub sub_msg {
         my $mynick  = HexChat::get_info('nick');
         my $mychan  = HexChat::get_info('channel');
         my $rawline = $_[1][0];
-        HexChat::print($rawline);
         my $i       = 0;
         my $presaystring;
         my $saystring;
