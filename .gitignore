@@ -18,3 +18,9 @@ nytprof.out
 *.o
 *.bs
 /_eumm/
+chanlist
+notifylist
+ignorelist
+watchlist
+engine
+language
