@@ -427,20 +427,30 @@ sub sub_say {
     $_[0] =~ s/\'//g;
     my $engine = @engine[0];
     my $language = @language[0];
-    if ( $engine eq 'FESTIVAL' ) {
-      if ($language eq "") {
-        $language = 'english';
-      }
-      system("echo '$_[0]' | festival --tts --language $language &");
+    my $os = $^O;
+
+    if ($os eq 'darwin') {
+      system("say '$_[0]' &")
     }
-    elsif ( $engine eq 'MBROLA' ) {
-      if ($language eq "") {
-        $language = 'us1';
-      }
-      system("espeak -v mb/mb-$language -s 150 -p 40 '$_[0]' | mbrola /usr/share/mbrola/$language/$language - -.au | aplay &");
+    elsif ($os eq /Win/) {
+      HexChat::print("Get a real OS...")
     }
     else {
-      system("espeak -s 150 -p 40 '$_[0]' &");
+      if ( $engine eq 'FESTIVAL' ) {
+        if ($language eq "") {
+          $language = 'english';
+        }
+        system("echo '$_[0]' | festival --tts --language $language &");
+      }
+      elsif ( $engine eq 'MBROLA' ) {
+        if ($language eq "") {
+          $language = 'us1';
+        }
+        system("espeak -v mb/mb-$language -s 150 -p 40 '$_[0]' | mbrola /usr/share/mbrola/$language/$language - -.au | aplay &");
+      }
+      else {
+        system("espeak -s 150 -p 40 '$_[0]' &");
+      }
     }
 }
 
