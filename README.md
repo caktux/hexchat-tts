@@ -33,6 +33,7 @@ ln -s ~/.config/hexchat/addons/tts/tts.pl ~/.config/hexchat/addons/tts.pl
 ```
 /tts info             Display some generel informations
 /tts [on|off]         Turns TTS on/off (default is on)
+/tts pm [on|off]      Turns TTS on/off for PMs (default is on)
 /tts addchan          listen to the current channel
 /tts delchan          stop listening to the current channel
 /tts listchans        shows all channels on the listening list
