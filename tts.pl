@@ -17,7 +17,7 @@
 
 use strict;
 
-my $version = "0.2.1";
+my $version = "0.2.2";
 
 HexChat::register( "HexChat TTS Script", $version, "", "" );
 HexChat::print("\002HexChat TTS Script $version   \017\0033[Loaded]");
@@ -40,6 +40,7 @@ HexChat::print("Settings saved in " . $ttspath);
 
 # hash with files
 my %listfiles = (
+    "TTS Nick list"    => "$ttspath/nicklist",
     "TTS Channel list" => "$ttspath/chanlist",
     "TTS Notify list"  => "$ttspath/notifylist",
     "TTS Ignore list"  => "$ttspath/ignorelist",
@@ -48,6 +49,7 @@ my %listfiles = (
     "TTS Language"     => "$ttspath/language");
 
 # arrays for the lists
+my @nicklist;
 my @chanlist;
 my @notifylist;
 my @ignorelist;
@@ -57,6 +59,7 @@ my @language;
 
 # hash for the list, only used for loading, saving the lists
 my $lists = {
+    "TTS Nick list"    => \@nicklist,
     "TTS Channel list" => \@chanlist,
     "TTS Notify list"  => \@notifylist,
     "TTS Ignore list"  => \@ignorelist,
@@ -114,8 +117,59 @@ sub sub_TTS() {
         savelist("TTS Language");
         HexChat::print("TTS language is \0033$args[1]");
     }
+    elsif ( uc $args[0] eq 'ADDNICK' ) {
+        my $nick = $args[1];
+        my $mychan = HexChat::get_info('channel');
+        $mychan = chansharp($mychan);
+        if ( $nick ne "" and $mychan ne "" ) {
+            for ( $i = 0 ; $i < @nicklist ; $i++ ) {
+                my @nickchan = split( " ", $nicklist[$i] );
+                if ( uc $nick eq uc $nickchan[0] and uc $mychan eq uc $nickchan[1]) {
+                    HexChat::print("already listening to $nick in $mychan\n");
+                    last;
+                }
+            }
+            if ( $i == @nicklist ) {
+                $nicklist[$i] = $nick . " " . $mychan;
+                HexChat::print("listening to $nick in $mychan\n");
+                savelist("TTS Nick list");
+            }
+        }
+        else { HexChat::print("no nick/channel specified\n"); }
+    }
+    elsif ( uc $args[0] eq 'DELNICK' ) {
+        my $nick = $args[1];
+        my $mychan = HexChat::get_info('channel');
+        $mychan = chansharp($mychan);
+        if ( $nick ne "" and $mychan ne "" ) {
+            for ( $i = 0 ; $i < @nicklist ; $i++ ) {
+                my @nickchan = split( " ", $nicklist[$i] );
+                if ( uc $nick eq uc $nickchan[0] and uc $mychan eq uc $nickchan[1] ) {
+                    splice( @nicklist, $i, 1 );
+                    HexChat::print("stopped listening to $nick in $mychan\n");
+                    savelist("TTS Nick list");
+                    $i = -1;
+                    last;
+                }
+            }
+            if ( $i > -1 ) {
+                HexChat::print("wasn't listening to $nick in $mychan\n");
+            }
+        }
+        else { HexChat::print("You are not in a channel\n"); }
+    }
+    elsif ( uc $args[0] eq 'LISTNICKS' ) {
+        HexChat::print("\002\026\0038,04 -- TTS Nick list --------------- \n");
+        if ( @nicklist > 0 ) {
+            for ( $i = 0 ; $i < @nicklist ; $i++ ) {
+                HexChat::print("  $nicklist[$i]");
+            }
+            HexChat::print( scalar @nicklist . " nicks in TTS nick list.\n" );
+        }
+        else { HexChat::print("TTS Nick list is empty.\n"); }
+    }
     elsif ( uc $args[0] eq 'ADDCHAN' ) {
-        my $mychan = $args[1] || HexChat::get_info(2);
+        my $mychan = $args[1] || HexChat::get_info('channel');
         $mychan = chansharp($mychan);
         if ( $mychan ne "" ) {
             for ( $i = 0 ; $i < @chanlist ; $i++ ) {
@@ -133,7 +187,7 @@ sub sub_TTS() {
         else { HexChat::print("no channel specified\n"); }
     }
     elsif ( uc $args[0] eq 'DELCHAN' ) {
-        my $mychan = $args[1] || HexChat::get_info(2);
+        my $mychan = $args[1] || HexChat::get_info('channel');
         $mychan = chansharp($mychan);
         if ( $mychan ne "" ) {
             for ( $i = 0 ; $i < @chanlist ; $i++ ) {
@@ -152,7 +206,7 @@ sub sub_TTS() {
         else { HexChat::print("You are not in a channel\n"); }
     }
     elsif ( uc $args[0] eq 'LISTCHANS' ) {
-        HexChat::print("\002\026\0038,12 -- TTS Channel list --------------- \n");
+        HexChat::print("\002\026\0038,04 -- TTS Channel list --------------- \n");
         if ( @chanlist > 0 ) {
             for ( $i = 0 ; $i < @chanlist ; $i++ ) {
                 HexChat::print("  $chanlist[$i]");
@@ -163,8 +217,7 @@ sub sub_TTS() {
     }
     elsif ( uc $args[0] eq 'NOTIFY' ) {
         if ( $args[1] eq "" ) {
-            HexChat::print(
-                "\002\026\0038,12 -- TTS Notify list --------------- \n");
+            HexChat::print("\002\026\0038,04 -- TTS Notify list --------------- \n");
             if ( @notifylist > 0 ) {
                 for ( $i = 0 ; $i < @notifylist ; $i++ ) {
                     HexChat::print("  $notifylist[$i]\n");
@@ -194,8 +247,7 @@ sub sub_TTS() {
     }
     elsif ( uc $args[0] eq 'IGNORE' ) {
         if ( $args[1] eq "" ) {
-            HexChat::print(
-                "\002\026\0038,12 -- TTS Ignore list --------------- \n");
+            HexChat::print("\002\026\0038,04 -- TTS Ignore list --------------- \n");
             if ( @ignorelist > 0 ) {
                 for ( $i = 0 ; $i < @ignorelist ; $i++ ) {
                     HexChat::print("  $ignorelist[$i]\n");
@@ -223,7 +275,7 @@ sub sub_TTS() {
     }
     elsif ( uc $args[0] eq 'WATCH' ) {
         if ( $args[1] eq "" ) {
-            HexChat::print("\002\026\0038,12 -- TTS Watch list --------------- \n");
+            HexChat::print("\002\026\0038,04 -- TTS Watch list --------------- \n");
             if ( @watchlist > 0 ) {
                 for ( $i = 0 ; $i < @watchlist ; $i++ ) {
                     HexChat::print("  $watchlist[$i]\n");
@@ -276,6 +328,9 @@ sub sub_TTS() {
         HexChat::print("\026  \017 /tts addchan          listen to the current channel                   \026  \n");
         HexChat::print("\026  \017 /tts delchan          stop listening to the current channel           \026  \n");
         HexChat::print("\026  \017 /tts listchans        shows all channels on the listening to list     \026  \n");
+        HexChat::print("\026  \017 /tts addnick <nick>   listen to <nick> in the current channel         \026  \n");
+        HexChat::print("\026  \017 /tts delnick <nick>   stop listening to <nick> in the current channel \026  \n");
+        HexChat::print("\026  \017 /tts listnicks        shows all nicks/channels on the listening list  \026  \n");
         HexChat::print("\026  \017 /tts notify [<nick>]  lists TTS notify list, add/del <nick>           \026  \n");
         HexChat::print("\026  \017 /tts ignore [<nick>]  lists TTS ignore list, add/del <nick>           \026  \n");
         HexChat::print("\026  \017 /tts watch [<nick>]   notifies you when <nick> join/parts a chan      \026  \n");
@@ -329,11 +384,36 @@ sub sub_msg {
                     $msgtxt =~ s/ACTION //;
                     ##
                     ## if joint channels > 1 "in $msgto: $nick $msgtxt" else "$nick $msgtxt"
-                    ## schaun ob HexChat::get_info(2) alle chans oder nur aktuellen liefert
+                    ## look if HexChat :: get_info (2) supplies all channels or current
                     ##
                     $saystring = "in $msgto: $nick $msgtxt";
                 }
                 else { $saystring = "$nick says in $msgto: $msgtxt"; }
+            }
+            elsif ( @nicklist > 0 ) {
+                for ( $i = 0 ; $i < @nicklist ; $i++ ) {
+                    my @nickchan = split( " ", $nicklist[$i] );
+                    if ( uc $nick eq uc $nickchan[0] and uc $msgto eq uc $nickchan[1] ) {
+                        if ( @nicklist > 1 ) {
+                            if ( $msgtxt =~ /^ACTION / ) {
+                                $msgtxt =~ s/ACTION //;
+                                $saystring = "in $msgto: $nick $msgtxt";
+                            }
+                            else {
+                                $saystring = "$nick says in $msgto: $msgtxt";
+                            }
+                        }
+                        else {
+                            if ( $msgtxt =~ /^ACTION / ) {
+                                $msgtxt =~ s/ACTION //;
+                                $saystring = "$nick $msgtxt";
+                            }
+                            else { $saystring = "$nick says $msgtxt"; }
+                        }
+                        $i = -1;
+                        last;
+                    }
+                }
             }
             elsif ( @chanlist > 0 ) {
                 for ( $i = 0 ; $i < @chanlist ; $i++ ) {

@@ -18,6 +18,7 @@ nytprof.out
 *.o
 *.bs
 /_eumm/
+nicklist
 chanlist
 notifylist
 ignorelist

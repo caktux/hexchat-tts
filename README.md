@@ -35,7 +35,10 @@ ln -s ~/.config/hexchat/addons/tts/tts.pl ~/.config/hexchat/addons/tts.pl
 /tts [on|off]         Turns TTS on/off (default is on)
 /tts addchan          listen to the current channel
 /tts delchan          stop listening to the current channel
-/tts listchans        shows all channels on the listening to list
+/tts listchans        shows all channels on the listening list
+/tts addnick <nick>   listen to <nick> in the current channel
+/tts delnick <nick>   stop listening to <nick> in the current channel
+/tts listnicks        shows all nicks/channels on the listening list
 /tts notify [<nick>]  lists TTS notify list, add/del <nick>
 /tts ignore [<nick>]  lists TTS ignore list, add/del <nick>
 /tts watch [<nick>]   notifies you when <nick> join/parts a chan
@@ -44,5 +47,13 @@ ln -s ~/.config/hexchat/addons/tts/tts.pl ~/.config/hexchat/addons/tts.pl
 /tts say <text>       says the text
 ```
 
+#### Lists
+- The channel list is for speaking all messages in a channel
+- The nicknames list is for speaking messages from nicknames per channel
+- The `notify` list is for online/offline status
+- The `watch` list is for joining/leaving a channel
+- The `ignore` list is for ignoring individual nicknames
+
 #### TODO
+- Per nick voices
 - Volume control
