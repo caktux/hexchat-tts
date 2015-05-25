@@ -301,8 +301,7 @@ sub sub_msg {
         my $mychan  = HexChat::get_info('channel');
         my $rawline = $_[1][0];
         my $i       = 0;
-        my $presaystring;
-        my $saystring;
+        my $saystring = "";
         $rawline =~ m/:(.*?)!(.*?)@(.*?) (.*?) (.*?) :(.*)/;
 
         # $rawline == complete line
@@ -360,7 +359,9 @@ sub sub_msg {
                     }
                 }
             }
-            sub_say("$saystring");
+            if ( $saystring ne "" ) {
+              sub_say("$saystring");
+            }
         }
     }
 
