@@ -437,7 +437,8 @@ sub sub_say {
     my $os = $^O;
 
     if ($os eq 'darwin') {
-      system("say '$_[0]' &")
+      system("kill -s 9 `ps -ef | grep say | grep -v grep | awk '{print \$2}'`");
+      system("say '$_[0]' &");
     }
     elsif ($os eq /Win/) {
       HexChat::print("Get a real OS...")
@@ -447,15 +448,18 @@ sub sub_say {
         if ($language eq "") {
           $language = 'english';
         }
+        system("kill -s 9 `ps -ef | grep festival | grep -v grep | awk '{print \$2}'`");
         system("echo '$_[0]' | festival --tts --language $language &");
       }
       elsif ( $engine eq 'MBROLA' ) {
         if ($language eq "") {
           $language = 'us1';
         }
+        system("kill -s 9 `ps -ef | grep aplay | grep -v grep | awk '{print \$2}'`");
         system("espeak -v mb/mb-$language -s 150 -p 40 '$_[0]' | mbrola /usr/share/mbrola/$language/$language - -.au | aplay &");
       }
       else {
+        system("kill -s 9 `ps -ef | grep espeak | grep -v grep | awk '{print \$2}'`");
         system("espeak -s 150 -p 40 '$_[0]' &");
       }
     }
