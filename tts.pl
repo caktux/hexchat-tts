@@ -291,7 +291,8 @@ sub sub_TTS() {
         HexChat::print("TTS is $status");
     }
     else { HexChat::print("\0034UNKNOWN command\ntype /tts help"); }
-    return 1;
+
+    return HexChat::EAT_ALL;
 }
 
 sub sub_msg {
@@ -318,7 +319,7 @@ sub sub_msg {
 
         if ( $nick ne "" ) {
             for ( $i = 0 ; $i < @ignorelist ; $i++ ) {
-                if ( uc $nick eq uc $ignorelist[$i] ) { return 1; }
+                if ( uc $nick eq uc $ignorelist[$i] ) { return HexChat::EAT_NONE; }
             }
 
             if ( uc $msgto eq uc $mynick ) {
@@ -362,6 +363,8 @@ sub sub_msg {
             sub_say("$saystring");
         }
     }
+
+    return HexChat::EAT_NONE;
 }
 
 sub sub_notify {
@@ -393,6 +396,8 @@ sub sub_notify {
             }
         }
     }
+
+    return HexChat::EAT_NONE;
 }
 
 sub sub_watch {
@@ -421,6 +426,8 @@ sub sub_watch {
             }
         }
     }
+
+    return HexChat::EAT_NONE;
 }
 
 sub sub_say {
