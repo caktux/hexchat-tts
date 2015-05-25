@@ -17,7 +17,7 @@
 
 use strict;
 
-my $version = "0.2.2";
+my $version = "0.2.3";
 
 HexChat::register( "HexChat TTS Script", $version, "", "" );
 HexChat::print("\002HexChat TTS Script $version   \017\0033[Loaded]");
@@ -32,7 +32,8 @@ HexChat::hook_server( "600",      "sub_notify" );
 HexChat::hook_server( "601",      "sub_notify" );
 
 # make TTS on by default
-my $TTS_on = 1;
+my $TTS_on = HexChat::plugin_pref_get('tts') || 1;
+my $TTS_pm_on = HexChat::plugin_pref_get('tts_pm') || 1;
 
 # path to the tts script and files
 my $ttspath = HexChat::get_info('configdir') . "/addons/tts";
@@ -97,10 +98,24 @@ sub sub_TTS() {
     elsif ( uc $args[0] eq 'ON' ) {
         $TTS_on = 1;
         HexChat::print("TTS switched \0033on");
+        HexChat::plugin_pref_set('tts', 1);
     }
     elsif ( uc $args[0] eq 'OFF' ) {
         $TTS_on = 0;
         HexChat::print("TTS switched \0034off");
+        HexChat::plugin_pref_set('tts', 0);
+    }
+    elsif ( uc $args[0] eq 'PM' ) {
+      if ( uc $args[1] eq 'ON' ) {
+          $TTS_pm_on = 1;
+          HexChat::print("TTS for private messages switched \0033on");
+          HexChat::plugin_pref_set('tts_pm', 1);
+      }
+      elsif ( uc $args[1] eq 'OFF' ) {
+          $TTS_pm_on = 0;
+          HexChat::print("TTS for private messages switched \0034off");
+          HexChat::plugin_pref_set('tts_pm', 0);
+      }
     }
     elsif ( uc $args[0] eq 'USE' ) {
         if ( uc $args[1] eq 'ESPEAK' || uc $args[1] eq 'FESTIVAL' || uc $args[1] eq 'MBROLA' ) {
@@ -325,6 +340,7 @@ sub sub_TTS() {
         HexChat::print("\n\026  HexChat TTS Script v$version                - help -                        \n");
         HexChat::print("\026  \017 /tts info             Display some generel informations               \026  \n");
         HexChat::print("\026  \017 /tts [on|off]         Turns TTS on/off (default is on)                \026  \n");
+        HexChat::print("\026  \017 /tts pm [on|off]      Turns TTS on/off for PMs (default is on)        \026  \n");
         HexChat::print("\026  \017 /tts addchan          listen to the current channel                   \026  \n");
         HexChat::print("\026  \017 /tts delchan          stop listening to the current channel           \026  \n");
         HexChat::print("\026  \017 /tts listchans        shows all channels on the listening to list     \026  \n");
@@ -341,9 +357,12 @@ sub sub_TTS() {
     }
     elsif ( uc $args[0] eq '' ) {
         my $status;
-        if   ($TTS_on) { $status = "\0033on" }
-        else           { $status = "\0034off" }
-        HexChat::print("TTS is $status");
+        my $status_pm;
+        if   ($TTS_on) { $status = "\0033on\017" }
+        else           { $status = "\0034off\017" }
+        if   ($TTS_pm_on) { $status_pm = "\0033on\017" }
+        else              { $status_pm = "\0034off\017" }
+        HexChat::print("TTS is $status, and $status_pm for private messages");
     }
     else { HexChat::print("\0034UNKNOWN command\ntype /tts help"); }
 
@@ -376,10 +395,10 @@ sub sub_msg {
                 if ( uc $nick eq uc $ignorelist[$i] ) { return HexChat::EAT_NONE; }
             }
 
-            if ( uc $msgto eq uc $mynick ) {
+            if ( $TTS_pm_on eq 1 and uc $msgto eq uc $mynick ) {
                 $saystring = "$nick says: $msgtxt";
             }
-            elsif ( $msgtxt =~ /\b$mynick\b/i ) {
+            elsif ( $TTS_pm_on eq 1 and $msgtxt =~ /\b$mynick\b/i ) {
                 if ( $msgtxt =~ /^ACTION / ) {
                     $msgtxt =~ s/ACTION //;
                     ##
