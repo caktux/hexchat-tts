@@ -440,9 +440,6 @@ sub sub_say {
       system("kill -s 9 `ps -ef | grep say | grep -v grep | awk '{print \$2}'`");
       system("say '$_[0]' &");
     }
-    elsif ($os eq /Win/) {
-      HexChat::print("Get a real OS...")
-    }
     else {
       if ( $engine eq 'FESTIVAL' ) {
         if ($language eq "") {
