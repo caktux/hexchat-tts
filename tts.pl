@@ -16,8 +16,10 @@
 # for more details.
 
 use strict;
+use lib HexChat::get_info('configdir') . '/addons/tts';
+use URI::Find;
 
-my $version = "0.2.3";
+my $version = "0.2.4";
 
 HexChat::register( "HexChat TTS Script", $version, "", "" );
 HexChat::print("\002HexChat TTS Script $version   \017\0033[Loaded]");
@@ -34,6 +36,7 @@ HexChat::hook_server( "601",      "sub_notify" );
 # make TTS on by default
 my $TTS_on = HexChat::plugin_pref_get('tts') || 1;
 my $TTS_pm_on = HexChat::plugin_pref_get('tts_pm') || 1;
+my $TTS_uris = HexChat::plugin_pref_get('tts_uris') || 0;
 
 # path to the tts script and files
 my $ttspath = HexChat::get_info('configdir') . "/addons/tts";
@@ -115,6 +118,18 @@ sub sub_TTS() {
           $TTS_pm_on = 0;
           HexChat::print("TTS for private messages switched \0034off");
           HexChat::plugin_pref_set('tts_pm', 0);
+      }
+    }
+    elsif ( uc $args[0] eq 'URIS' ) {
+      if ( uc $args[1] eq 'ON' ) {
+          $TTS_uris = 1;
+          HexChat::print("TTS for URIs switched \0033on");
+          HexChat::plugin_pref_set('tts_uris', 1);
+      }
+      elsif ( uc $args[1] eq 'OFF' ) {
+          $TTS_uris = 0;
+          HexChat::print("TTS for URIs switched \0034off");
+          HexChat::plugin_pref_set('tts_uris', 0);
       }
     }
     elsif ( uc $args[0] eq 'USE' ) {
@@ -341,6 +356,7 @@ sub sub_TTS() {
         HexChat::print("\026  \017 /tts info             Display some generel informations               \026  \n");
         HexChat::print("\026  \017 /tts [on|off]         Turns TTS on/off (default is on)                \026  \n");
         HexChat::print("\026  \017 /tts pm [on|off]      Turns TTS on/off for PMs (default is on)        \026  \n");
+        HexChat::print("\026  \017 /tts uris [on|off]    Turns TTS on/off for URIs (default is off)      \026  \n");
         HexChat::print("\026  \017 /tts addchan          listen to the current channel                   \026  \n");
         HexChat::print("\026  \017 /tts delchan          stop listening to the current channel           \026  \n");
         HexChat::print("\026  \017 /tts listchans        shows all channels on the listening to list     \026  \n");
@@ -358,11 +374,14 @@ sub sub_TTS() {
     elsif ( uc $args[0] eq '' ) {
         my $status;
         my $status_pm;
+        my $status_uris;
         if   ($TTS_on) { $status = "\0033on\017" }
         else           { $status = "\0034off\017" }
         if   ($TTS_pm_on) { $status_pm = "\0033on\017" }
         else              { $status_pm = "\0034off\017" }
-        HexChat::print("TTS is $status, and $status_pm for private messages");
+        if   ($TTS_uris) { $status_uris = "\0033on\017" }
+        else             { $status_uris = "\0034off\017" }
+        HexChat::print("TTS is $status; $status_pm for private messages, $status_uris for URIs");
     }
     else { HexChat::print("\0034UNKNOWN command\ntype /tts help"); }
 
@@ -535,10 +554,16 @@ sub sub_say {
     my $engine = @engine[0];
     my $language = @language[0];
     my $os = $^O;
+    my $line = $_[0];
+
+    if (!$TTS_uris) {
+      my $finder = URI::Find->new( sub { '' } );
+      $finder->find(\$line);
+    }
 
     if ($os eq 'darwin') {
       system("kill -s 9 `ps -ef | grep say | grep -v grep | awk '{print \$2}'`");
-      system("say '$_[0]' &");
+      system("say '$line' &");
     }
     else {
       if ( $engine eq 'FESTIVAL' ) {
@@ -546,18 +571,18 @@ sub sub_say {
           $language = 'english';
         }
         system("kill -s 9 `ps -ef | grep festival | grep -v grep | awk '{print \$2}'`");
-        system("echo '$_[0]' | festival --tts --language $language &");
+        system("echo '$line' | festival --tts --language $language &");
       }
       elsif ( $engine eq 'MBROLA' ) {
         if ($language eq "") {
           $language = 'us1';
         }
         system("kill -s 9 `ps -ef | grep aplay | grep -v grep | awk '{print \$2}'`");
-        system("espeak -v mb/mb-$language -s 150 -p 40 '$_[0]' | mbrola /usr/share/mbrola/$language/$language - -.au | aplay &");
+        system("espeak -v mb/mb-$language -s 150 -p 40 '$line' | mbrola /usr/share/mbrola/$language/$language - -.au | aplay &");
       }
       else {
         system("kill -s 9 `ps -ef | grep espeak | grep -v grep | awk '{print \$2}'`");
-        system("espeak -s 150 -p 40 '$_[0]' &");
+        system("espeak -s 150 -p 40 '$line' &");
       }
     }
 }
