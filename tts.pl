@@ -88,6 +88,41 @@ for ( $i = 0 ; $i < @chanlist ; $i++ ) {
     $chanlist[$i] = chansharp( $chanlist[$i] );
 }
 
+sub sub_set_lang {
+    my $nick = $_[0];
+    my $lang = $_[1];
+    my $i;
+
+    for ( $i = 1 ; $i < @language ; $i++ ) {
+        my @nicklang = split( " ", $language[$i] );
+        if ( uc $nick eq uc $nicklang[0] ) {
+            if ( uc $lang eq "NONE" ) {
+                splice( @language, $i, 1 );
+                savelist("TTS Language");
+                return;
+            }
+            if ( $nicklang[1] ne $lang ) {
+                $language[$i] = $nick . " " . $lang;
+                savelist("TTS Language");
+            }
+            return;
+        }
+    }
+    $language[$i] = $nick . " " . $lang;
+    savelist("TTS Language");
+}
+
+sub sub_get_lang {
+    my $nick = uc $_[0];
+    for ( $i = 1 ; $i < @language ; $i++ ) {
+        my @nicklang = split( " ", $language[$i] );
+        if ( $nick eq uc $nicklang[0] ) {
+            return $nicklang[1];
+        }
+    }
+    return $language[0];
+}
+
 sub sub_TTS() {
     my $argsline = $_[1][1];
     $argsline =~ s/\s+/ /g;
@@ -143,9 +178,26 @@ sub sub_TTS() {
         }
     }
     elsif ( uc $args[0] eq 'LANG' ) {
-        $language[0] = $args[1];
-        savelist("TTS Language");
-        HexChat::print("TTS language is \0033$args[1]");
+        if ( scalar @args == 1 ) {
+            HexChat::print("TTS default language is \0033" . ( $language[0] eq "" ? "not set" : $language[0] ) );
+            for ( $i = 1 ; $i < @language ; $i++ ) {
+                my @nicklang = split( " ", $language[$i] );
+                if (scalar @nicklang == 2) {
+                    HexChat::print("TTS language for \0033$nicklang[0]\017 is \0033$nicklang[1]");
+                }
+            }
+        }
+        elsif ( scalar @args == 2 ) {
+            $language[0] = $args[1];
+            HexChat::print("TTS language is \0033$args[1]");
+            savelist("TTS Language");
+        }
+        elsif ( scalar @args == 3 ) {
+            sub_set_lang($args[1], $args[2]);
+            if ( uc $args[2] ne "NONE" ) {
+                HexChat::print("TTS language for $args[1] is \0033$args[2]");
+            }
+        }
     }
     elsif ( uc $args[0] eq 'ADDNICK' ) {
         my $nick = $args[1];
@@ -339,7 +391,7 @@ sub sub_TTS() {
             if ($TTS_on) {
                 shift @args;
                 my $saystring = join( " ", @args );
-                sub_say("$saystring");
+                sub_say($language[0], "$saystring");
             }
             else { HexChat::print("TTS is \0034off\017, switch it on first"); }
         }
@@ -352,24 +404,24 @@ sub sub_TTS() {
     #      else {HexChat::print("set what?");}
     #   }
     elsif ( uc $args[0] eq 'HELP' ) {
-        HexChat::print("\n\026  HexChat TTS Script v$version                - help -                        \n");
-        HexChat::print("\026  \017 /tts info             Display some generel informations               \026  \n");
-        HexChat::print("\026  \017 /tts [on|off]         Turns TTS on/off (default is on)                \026  \n");
-        HexChat::print("\026  \017 /tts pm [on|off]      Turns TTS on/off for PMs (default is on)        \026  \n");
-        HexChat::print("\026  \017 /tts uris [on|off]    Turns TTS on/off for URIs (default is off)      \026  \n");
-        HexChat::print("\026  \017 /tts addchan          listen to the current channel                   \026  \n");
-        HexChat::print("\026  \017 /tts delchan          stop listening to the current channel           \026  \n");
-        HexChat::print("\026  \017 /tts listchans        shows all channels on the listening to list     \026  \n");
-        HexChat::print("\026  \017 /tts addnick <nick>   listen to <nick> in the current channel         \026  \n");
-        HexChat::print("\026  \017 /tts delnick <nick>   stop listening to <nick> in the current channel \026  \n");
-        HexChat::print("\026  \017 /tts listnicks        shows all nicks/channels on the listening list  \026  \n");
-        HexChat::print("\026  \017 /tts notify [<nick>]  lists TTS notify list, add/del <nick>           \026  \n");
-        HexChat::print("\026  \017 /tts ignore [<nick>]  lists TTS ignore list, add/del <nick>           \026  \n");
-        HexChat::print("\026  \017 /tts watch [<nick>]   notifies you when <nick> join/parts a chan      \026  \n");
-        HexChat::print("\026  \017 /tts use <engine>     TTS engine ('espeak', 'mbrola' or 'festival')   \026  \n");
-        HexChat::print("\026  \017 /tts lang <language>  TTS language (festival->english, mbrola->us1)   \026  \n");
-        HexChat::print("\026  \017 /tts say <text>       says the text                                   \026  \n");
-        HexChat::print("\026                                                                           \n\n");
+        HexChat::print("\n\026  HexChat TTS Script v$version                   - help -                            \n");
+        HexChat::print("\026  \017 /tts info                    Display some generel informations               \026  \n");
+        HexChat::print("\026  \017 /tts [on|off]                Turns TTS on/off (default is on)                \026  \n");
+        HexChat::print("\026  \017 /tts pm [on|off]             Turns TTS on/off for PMs (default is on)        \026  \n");
+        HexChat::print("\026  \017 /tts uris [on|off]           Turns TTS on/off for URIs (default is off)      \026  \n");
+        HexChat::print("\026  \017 /tts addchan                 listen to the current channel                   \026  \n");
+        HexChat::print("\026  \017 /tts delchan                 stop listening to the current channel           \026  \n");
+        HexChat::print("\026  \017 /tts listchans               shows all channels on the listening to list     \026  \n");
+        HexChat::print("\026  \017 /tts addnick <nick>          listen to <nick> in the current channel         \026  \n");
+        HexChat::print("\026  \017 /tts delnick <nick>          stop listening to <nick> in the current channel \026  \n");
+        HexChat::print("\026  \017 /tts listnicks               shows all nicks/channels on the listening list  \026  \n");
+        HexChat::print("\026  \017 /tts notify [<nick>]         lists TTS notify list, add/del <nick>           \026  \n");
+        HexChat::print("\026  \017 /tts ignore [<nick>]         lists TTS ignore list, add/del <nick>           \026  \n");
+        HexChat::print("\026  \017 /tts watch [<nick>]          notifies you when <nick> join/parts a chan      \026  \n");
+        HexChat::print("\026  \017 /tts use <engine>            TTS engine ('espeak', 'mbrola' or 'festival')   \026  \n");
+        HexChat::print("\026  \017 /tts lang [[<nick>] <lang>]  TTS language (festival->english, mbrola->us1)   \026  \n");
+        HexChat::print("\026  \017 /tts say <text>              says the text                                   \026  \n");
+        HexChat::print("\026                                                                                  \n\n");
     }
     elsif ( uc $args[0] eq '' ) {
         my $status;
@@ -408,14 +460,17 @@ sub sub_msg {
         my $nick   = $1;
         my $msgto  = $5;
         my $msgtxt = $6;
+        my $lang;
 
         if ( $nick ne "" ) {
             for ( $i = 0 ; $i < @ignorelist ; $i++ ) {
                 if ( uc $nick eq uc $ignorelist[$i] ) { return HexChat::EAT_NONE; }
             }
+            $lang = sub_get_lang($msgto);
 
             if ( $TTS_pm_on eq 1 and uc $msgto eq uc $mynick ) {
                 $saystring = "$nick says: $msgtxt";
+                $lang = sub_get_lang($nick);
             }
             elsif ( $TTS_pm_on eq 1 and $msgtxt =~ /\b$mynick\b/i ) {
                 if ( $msgtxt =~ /^ACTION / ) {
@@ -478,7 +533,7 @@ sub sub_msg {
                 }
             }
             if ( $saystring ne "" ) {
-              sub_say("$saystring");
+              sub_say($lang, "$saystring");
             }
         }
     }
@@ -510,7 +565,7 @@ sub sub_notify {
         else                 { $verb = "going offline" }
         for ( $i = 0 ; $i < @notifylist ; $i++ ) {
             if ( uc $4 eq uc $notifylist[$i] ) {
-                sub_say("$4 $verb");
+                sub_say($language[0], "$4 $verb");
                 last;
             }
         }
@@ -540,7 +595,7 @@ sub sub_watch {
         else                     { $verb = "left" }
         for ( $i = 0 ; $i < @watchlist ; $i++ ) {
             if ( uc $1 eq uc $watchlist[$i] ) {
-                sub_say("$1 $verb channel: $5");
+                sub_say($language[0], "$1 $verb channel: $5");
                 last;
             }
         }
@@ -552,9 +607,9 @@ sub sub_watch {
 sub sub_say {
     $_[0] =~ s/\'//g;
     my $engine = @engine[0];
-    my $language = @language[0];
+    my $language = $_[0];
     my $os = $^O;
-    my $line = $_[0];
+    my $line = $_[1];
 
     if (!$TTS_uris) {
       my $finder = URI::Find->new( sub { '' } );
